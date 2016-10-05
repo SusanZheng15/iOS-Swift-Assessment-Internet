@@ -12,11 +12,24 @@ class InternetsViewController: UIViewController {
 
     @IBOutlet weak var weatherLabel: UILabel!
     
+    let key = "b5effff115444a95919d21e60bb81154"
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
     }
     
     @IBAction func updateWeatherTouched(_ sender: UIButton) {
+        
+        fetchWeather { (temp) in
+            
+            OperationQueue.main.addOperation({
+                let tempString = String(describing: temp)
+                self.weatherLabel.text = tempString
+            })
+            
+            
+        }
         
     }
     
@@ -31,9 +44,41 @@ class InternetsViewController: UIViewController {
     }
     */
  
-    func fetchWeather(){
+    func fetchWeather(completion: @escaping (CGFloat)->()){
         
-        let urlString = "https://flatironAssessment.week8.com/weatherInfo"
+        let urlString = "https://api.darksky.net/forecast/\(key)/42.3601,-71.0589"
+        
+        let url = URL(string: urlString)
+        
+        guard let unwrappedURL = url else {return}
+        
+        let session = URLSession.shared
+        
+        let task = session.dataTask(with: unwrappedURL) { (data, response, error) in
+            
+            do
+            {
+                guard let unwrappedData = data else {return}
+                let weather = try JSONSerialization.jsonObject(with: unwrappedData, options: []) as? NSDictionary
+                
+                if let weatherDictionary = weather
+                {
+                    let weatherArray = weatherDictionary["currently"] as! NSDictionary
+                
+                   // print(weatherArray)
+                    
+                    let temperature = weatherArray["temperature"] as! CGFloat
+                    
+                    print(temperature)
+                    completion(temperature)
+                }
+                
+            }
+            catch{
+                print(error)
+            }
+        }
+        task.resume()
 
     }
 }
